@@ -1,13 +1,18 @@
 import Link from "next/link";
-import { 
-  ArrowRight, 
-  MessageSquare, 
-  TrendingUp, 
-  BarChart3, 
-  Zap, 
-  Shield, 
-  Users, 
-  CheckCircle2 
+import Image from "next/image";
+import {
+  ArrowRight,
+  MessageSquare,
+  TrendingUp,
+  BarChart3,
+  Zap,
+  Shield,
+  Users,
+  CheckCircle2,
+  Github,
+  Linkedin,
+  Twitter,
+  Youtube,
 } from "lucide-react";
 
 export default function Home() {
@@ -21,29 +26,24 @@ export default function Home() {
       <header className="sticky top-0 z-50 glass border-b border-zinc-200/80 backdrop-blur-md px-6 py-4">
         <div className="mx-auto max-w-6xl flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-sky-500 text-white font-bold transition group-hover:scale-105 shadow-lg shadow-indigo-500/20">
-              ◆
-            </div>
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-650 bg-clip-text text-transparent font-extrabold">
-              LOOP
-            </span>
+            <Image src="/loop logo.png" alt="LOOP" width={184} height={86} className="h-10 w-auto object-contain transition group-hover:scale-105" priority />
           </Link>
 
           <div className="flex items-center gap-4">
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               className="text-sm font-medium text-zinc-600 hover:text-zinc-950 transition"
             >
               Sign In
             </Link>
-            <Link 
-              href="/dashboard" 
+            <Link
+              href="/dashboard"
               className="inline-flex items-center justify-center rounded-xl bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-800 border border-zinc-200 hover:bg-zinc-200/80 transition"
             >
               Dashboard
             </Link>
-            <Link 
-              href="/signup" 
+            <Link
+              href="/signup"
               className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/20"
             >
               Get Started
@@ -53,8 +53,12 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <main className="mx-auto max-w-6xl px-6 pt-20 pb-24 text-center relative z-10">
-        <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs font-medium text-indigo-600 ring-1 ring-zinc-200 mb-6 animate-fade-in">
+      <main className="mx-auto max-w-6xl px-6 pt-6 pb-24 text-center relative z-10 sm:pt-10">
+        <section className="relative left-1/2 isolate w-screen -translate-x-1/2 overflow-hidden py-8 sm:py-12">
+          <Image src="/loop-analytics.gif" alt="" fill unoptimized priority sizes="(max-inline-size: 768px) 100vw, 1152px" className="object-cover opacity-25 dark:opacity-30" />
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-white/45 via-white/65 to-white/80 dark:from-[#0b1020]/45 dark:via-[#0b1020]/65 dark:to-[#0b1020]/80" />
+          <div className="relative z-10 mx-auto max-w-6xl px-6">
+        <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/90 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-md mb-6 animate-fade-in">
           <Zap className="h-3.5 w-3.5" />
           <span>Next-generation Customer Intelligence</span>
         </div>
@@ -77,12 +81,11 @@ export default function Home() {
           </Link>
           <Link
             href="/dashboard"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl glass px-6 py-3.5 text-sm font-semibold text-zinc-700 border border-zinc-200 hover:bg-zinc-50 transition"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/90 px-6 py-3.5 text-sm font-semibold text-zinc-800 shadow-sm backdrop-blur-md transition hover:bg-white"
           >
             Explore live demo dashboard
           </Link>
         </div>
-
         {/* Dashboard Preview Mockup */}
         <div className="mt-16 rounded-2xl glass border border-zinc-200 p-2 shadow-xl animate-fade-in bg-zinc-50/50">
           <div className="rounded-xl overflow-hidden bg-white border border-zinc-150 p-6 text-left">
@@ -92,7 +95,7 @@ export default function Home() {
                 <span className="w-3 h-3 rounded-full bg-red-500/85" />
                 <span className="w-3 h-3 rounded-full bg-yellow-500/85" />
                 <span className="w-3 h-3 rounded-full bg-green-500/85" />
-                <span className="ml-4 text-xs text-zinc-400 font-mono">loop-workspace-dashboard</span>
+                <span className="ml-4 text-xs font-medium text-zinc-600 font-mono">loop-workspace-dashboard</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-zinc-650 bg-zinc-50 px-3 py-1 rounded-lg border border-zinc-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -163,6 +166,25 @@ export default function Home() {
             </div>
           </div>
         </div>
+          </div>
+        </section>
+
+        {/* Analytics and AI chat showcase */}
+        <section className="mt-28 text-left">
+          <div className="mx-auto max-w-2xl text-center"><span className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600"><BarChart3 className="h-3.5 w-3.5"/>Live intelligence</span><h2 className="mt-5 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">See the work. Ask what matters.</h2><p className="mt-4 text-sm leading-6 text-zinc-600">LOOP connects real-time analytics with an AI teammate that turns insights into clear next steps.</p></div>
+          <div className="mt-12 grid gap-6 lg:grid-cols-2">
+            <div className="relative overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-sky-50 p-5 shadow-lg shadow-indigo-100/60 sm:p-7">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-indigo-200/40 blur-3xl animate-pulse"/>
+              <div className="relative rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl"><div className="flex items-center justify-between"><div><p className="text-xs font-semibold text-zinc-900">Productivity overview</p><p className="mt-1 text-[11px] text-zinc-500">This week&apos;s focus performance</p></div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-600">+18.4%</span></div><div className="mt-6 flex h-28 items-end gap-2">{[42, 68, 51, 78, 66, 92, 81].map((height, index) => <span key={index} className={`flex-1 rounded-t-md bg-gradient-to-t from-indigo-600 to-sky-400 ${index === 5 ? 'animate-pulse' : ''}`} style={{ blockSize: `${height}%` }}/>)}</div><div className="mt-3 flex justify-between text-[9px] font-medium text-zinc-400"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div className="mt-5 grid grid-cols-3 gap-3 border-t border-zinc-100 pt-4"><div><p className="text-[10px] text-zinc-500">Focus time</p><b className="text-sm text-zinc-900">8h 24m</b></div><div><p className="text-[10px] text-zinc-500">Tasks done</p><b className="text-sm text-zinc-900">18</b></div><div><p className="text-[10px] text-zinc-500">Focus score</p><b className="text-sm text-zinc-900">82%</b></div></div></div>
+              <div className="relative mt-5 flex items-center gap-2 text-xs font-medium text-indigo-700"><span className="h-2 w-2 rounded-full bg-indigo-500 animate-ping"/><span>Analytics update as your work happens.</span></div>
+            </div>
+            <div className="relative overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-cyan-50 p-5 shadow-lg shadow-violet-100/60 sm:p-7">
+              <div className="absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-cyan-200/40 blur-3xl animate-pulse"/>
+              <div className="relative rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl"><div className="flex items-center gap-3 border-b border-zinc-100 pb-4"><Image src="/loop icon.png" alt="LOOP AI" width={32} height={32} className="h-8 w-8 rounded-xl object-cover"/><div><p className="text-xs font-semibold text-zinc-900">LOOP AI</p><p className="text-[10px] text-emerald-600">● Online and ready to help</p></div></div><div className="space-y-4 py-5 text-xs"><div className="flex gap-2"><Image src="/loop icon.png" alt="" width={24} height={24} className="h-6 w-6 rounded-lg object-cover"/><p className="max-w-[78%] rounded-2xl rounded-tl-sm bg-zinc-100 px-3 py-2.5 text-zinc-600">Your focus score is up 18%. Want a plan for your next task?</p></div><p className="ml-auto max-w-[70%] rounded-2xl rounded-tr-sm bg-indigo-600 px-3 py-2.5 text-white">Yes, plan my afternoon.</p><div className="flex gap-2"><Image src="/loop icon.png" alt="" width={24} height={24} className="h-6 w-6 rounded-lg object-cover"/><p className="max-w-[78%] rounded-2xl rounded-tl-sm bg-zinc-100 px-3 py-2.5 text-zinc-600">Start with Design Homepage UI, then complete Authentication before your Team Meeting.</p></div></div><div className="flex items-center gap-1.5 rounded-xl bg-zinc-50 px-3 py-2 text-[10px] text-zinc-400"><span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce"/><span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce [animation-delay:150ms]"/><span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce [animation-delay:300ms]"/><span className="ml-1">LOOP AI is thinking</span></div></div>
+              <p className="relative mt-5 text-xs font-medium text-violet-700">Chat with an AI coach that understands your workload.</p>
+            </div>
+          </div>
+        </section>
 
         {/* Feature Grid */}
         <div className="mt-28">
@@ -228,24 +250,26 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 bg-zinc-50 py-12 relative z-10">
-        <div className="mx-auto max-w-6xl px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white text-xs font-bold">
-              ◆
+      <footer className="relative z-10 mt-20 border-t border-zinc-200 bg-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-5 gap-y-10 px-5 py-12 sm:gap-x-10 sm:px-6 lg:grid-cols-[1.3fr_repeat(5,.7fr)] lg:py-14">
+          <div className="col-span-2 sm:col-span-2 lg:col-span-1">
+            <Link href="/" className="inline-flex"><Image src="/loop logo.png" alt="LOOP" width={184} height={86} className="h-10 w-auto object-contain" /></Link>
+            <p className="mt-4 max-w-sm text-sm leading-6 text-zinc-500">The AI productivity platform that helps teams plan, automate, collaborate, and achieve more with intelligent workflows.</p>
+            <a href="mailto:support@loop.ai" className="mt-5 inline-block text-sm font-medium text-indigo-600 transition hover:text-indigo-500">support@loop.ai</a>
+            <div className="mt-6 flex items-center gap-2">
+              <a href="#" aria-label="LOOP on GitHub" className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"><Github className="h-4 w-4" /></a>
+              <a href="#" aria-label="LOOP on LinkedIn" className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"><Linkedin className="h-4 w-4" /></a>
+              <a href="#" aria-label="LOOP on X" className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"><Twitter className="h-4 w-4" /></a>
+              <a href="#" aria-label="LOOP on YouTube" className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"><Youtube className="h-4 w-4" /></a>
             </div>
-            <span className="text-sm font-semibold text-zinc-500 tracking-tight">
-              LOOP &copy; 2026. All rights reserved.
-            </span>
           </div>
-
-          <div className="flex gap-6 text-xs text-zinc-500">
-            <Link href="#" className="hover:text-zinc-800 transition">Terms</Link>
-            <Link href="#" className="hover:text-zinc-800 transition">Privacy</Link>
-            <Link href="#" className="hover:text-zinc-800 transition">Cookies</Link>
-            <Link href="#" className="hover:text-zinc-800 transition">Contact Support</Link>
-          </div>
+          <div><h3 className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-900">Product</h3><div className="mt-4 space-y-3 text-sm text-zinc-500"><Link href="/dashboard" className="block transition hover:text-indigo-600">Dashboard</Link><Link href="/tasks" className="block transition hover:text-indigo-600">Tasks</Link><Link href="/calendar" className="block transition hover:text-indigo-600">Calendar</Link><Link href="/goals" className="block transition hover:text-indigo-600">Goals</Link><Link href="/ask" className="block transition hover:text-indigo-600">AI Assistant</Link><Link href="/analytics" className="block transition hover:text-indigo-600">Analytics</Link></div></div>
+          <div><h3 className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-900">Resources</h3><div className="mt-4 space-y-3 text-sm text-zinc-500"><Link href="#" className="block transition hover:text-indigo-600">Help Center</Link><Link href="#" className="block transition hover:text-indigo-600">Tutorials</Link><Link href="#" className="block transition hover:text-indigo-600">Blog</Link><Link href="#" className="block transition hover:text-indigo-600">Community</Link><Link href="#" className="block transition hover:text-indigo-600">Templates</Link></div></div>
+          <div><h3 className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-900">Developers</h3><div className="mt-4 space-y-3 text-sm text-zinc-500"><Link href="#" className="block transition hover:text-indigo-600">Documentation</Link><Link href="#" className="block transition hover:text-indigo-600">API Reference</Link><Link href="#" className="block transition hover:text-indigo-600">SDKs</Link><Link href="#" className="block transition hover:text-indigo-600">Authentication</Link><Link href="#" className="block transition hover:text-indigo-600">OAuth &amp; Webhooks</Link><Link href="#" className="block transition hover:text-indigo-600">OpenAPI Spec</Link><Link href="#" className="block transition hover:text-indigo-600">Examples</Link></div></div>
+          <div><h3 className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-900">Company</h3><div className="mt-4 space-y-3 text-sm text-zinc-500"><Link href="#" className="block transition hover:text-indigo-600">About</Link><Link href="#" className="block transition hover:text-indigo-600">Careers</Link><Link href="#" className="block transition hover:text-indigo-600">Security</Link><Link href="#" className="block transition hover:text-indigo-600">Contact</Link></div></div>
+          <div><h3 className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-900">Security</h3><div className="mt-4 space-y-3 text-sm text-zinc-500"><Link href="#" className="block transition hover:text-indigo-600">Trust Center</Link><Link href="#" className="block transition hover:text-indigo-600">Compliance</Link><Link href="#" className="block transition hover:text-indigo-600">SOC 2</Link><Link href="#" className="block transition hover:text-indigo-600">GDPR</Link><Link href="#" className="block transition hover:text-indigo-600">Privacy</Link><Link href="#" className="block transition hover:text-indigo-600">Data Processing</Link><Link href="#" className="block transition hover:text-indigo-600">Responsible AI</Link></div></div>
         </div>
+        <div className="border-t border-zinc-100"><div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-5 py-5 text-center text-xs text-zinc-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:text-left"><span>© 2026 LOOP Technologies. Built for the future of AI productivity.</span><div className="flex flex-wrap justify-center gap-x-4 gap-y-2 sm:justify-start"><span className="font-medium text-emerald-600">● Status</span><span>Version 1.0</span><Link href="#" className="transition hover:text-indigo-600">Privacy</Link><Link href="#" className="transition hover:text-indigo-600">Terms</Link><Link href="#" className="transition hover:text-indigo-600">Cookies</Link></div></div></div>
       </footer>
     </div>
   );
