@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { MessageSquare, Sparkles, Globe, Activity } from "lucide-react";
 
 export default function AuthLayout({
@@ -24,12 +25,7 @@ export default function AuthLayout({
         {/* Branding header */}
         <div className="z-10">
           <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-sky-500 text-white font-bold text-sm shadow-md">
-              ◆
-            </div>
-            <span className="text-lg font-bold tracking-tight text-zinc-900 font-extrabold">
-              LOOP
-            </span>
+            <Image src="/loop logo.png" alt="LOOP logo" width={184} height={86} className="h-10 w-auto object-contain" priority />
           </Link>
         </div>
 
@@ -37,9 +33,7 @@ export default function AuthLayout({
         <div className="my-auto py-12 flex flex-col items-center justify-center z-10 relative h-[400px] w-full">
           {/* Central LOOP core */}
           <div className="h-20 w-20 rounded-2xl bg-white border border-zinc-200 shadow-xl flex items-center justify-center relative animate-float-medium">
-            <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-indigo-50/50 to-indigo-100/50 flex items-center justify-center">
-              <span className="text-2xl text-indigo-600 font-bold">◆</span>
-            </div>
+            <Image src="/loop logo.png" alt="LOOP logo" width={64} height={30} className="h-auto w-16 object-contain" priority />
             {/* Pulsing rings */}
             <div className="absolute -inset-4 rounded-3xl border border-indigo-500/20 animate-ping [animation-duration:3s]" />
             <div className="absolute -inset-8 rounded-[36px] border border-indigo-500/10 animate-ping [animation-duration:4s] [animation-delay:1s]" />
@@ -107,12 +101,7 @@ export default function AuthLayout({
         <header className="w-full flex flex-col gap-4 lg:hidden">
           <div className="flex items-center justify-between">
             <Link href="/" className="inline-flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-sky-500 text-white font-bold text-sm shadow-md">
-                ◆
-              </div>
-              <span className="text-lg font-bold tracking-tight text-zinc-900 font-extrabold">
-                LOOP
-              </span>
+              <Image src="/loop logo.png" alt="LOOP logo" width={184} height={86} className="h-10 w-auto object-contain" priority />
             </Link>
           </div>
 
