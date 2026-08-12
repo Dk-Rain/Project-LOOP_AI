@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -23,6 +23,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [user, setUser] = useState<{ name: string; role: string; workspaceName?: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then((data) => {
+        setUser(data.user);
+      })
+      .catch(() => {
+        router.push("/login");
+      });
+  }, [router]);
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -33,7 +48,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
 
@@ -125,8 +141,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </svg>
             </div>
             <div className="overflow-hidden">
-              <p className="text-xs font-semibold text-zinc-900 truncate">Lawrence Dike</p>
-              <p className="text-[10px] text-zinc-500 truncate">Workspace Admin</p>
+              <p className="text-xs font-semibold text-zinc-900 truncate">{user?.name || "Loading..."}</p>
+              <p className="text-[10px] text-zinc-500 truncate">
+                {user?.role === "ADMIN" ? "Admin" : user?.role === "ANALYST" ? "Analyst" : "Viewer"}
+                {user?.workspaceName && ` (${user.workspaceName})`}
+              </p>
             </div>
           </div>
           

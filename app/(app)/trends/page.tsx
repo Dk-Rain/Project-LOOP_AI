@@ -1,36 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   TrendingUp, 
   ArrowUpRight, 
-  ArrowDownRight, 
-  BarChart3, 
   Tag, 
   MessageSquare,
-  Globe,
-  Mail,
-  Smartphone
+  Sparkles,
+  Inbox,
+  AlertCircle
 } from "lucide-react";
 
+interface SpikingTheme {
+  id: string;
+  name: string;
+  recentCount: number;
+  previousCount: number;
+  growthPercent: number;
+  isSpiking: boolean;
+}
+
+interface ThemeSummary {
+  id: string;
+  name: string;
+  count: number;
+  avgSentimentScore: number;
+  sentimentDistribution: {
+    positive: number;
+    negative: number;
+    neutral: number;
+  };
+}
+
+interface Feedback {
+  id: string;
+  content: string;
+  channel: string;
+  sentiment: string;
+  customerName: string | null;
+  customerEmail: string | null;
+  createdAt: string;
+}
+
 export default function TrendsPage() {
-  const [activeKeyword, setActiveKeyword] = useState("Stripe integration");
+  const [themes, setThemes] = useState<ThemeSummary[]>([]);
+  const [spikingThemes, setSpikingThemes] = useState<SpikingTheme[]>([]);
+  const [selectedTheme, setSelectedTheme] = useState<string>("");
+  const [themeFeedbacks, setThemeFeedbacks] = useState<Feedback[]>([]);
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFeedbacksLoading, setIsFeedbacksLoading] = useState(false);
 
-  const keywords = [
-    { name: "Stripe integration", volume: 42, sentiment: "negative", trend: "up" },
-    { name: "Offline Sync", volume: 27, sentiment: "neutral", trend: "up" },
-    { name: "Safari Session ITP", volume: 18, sentiment: "negative", trend: "stable" },
-    { name: "API Docs v2", volume: 15, sentiment: "negative", trend: "down" },
-    { name: "Speeds / Latency", volume: 12, sentiment: "positive", trend: "up" },
-    { name: "React dashboard", volume: 38, sentiment: "positive", trend: "up" }
-  ];
+  // Fetch themes and spikes
+  useEffect(() => {
+    setIsLoading(true);
+    Promise.all([
+      fetch("/api/themes").then(res => res.json()),
+      fetch("/api/themes/spiking").then(res => res.json())
+    ])
+      .then(([themesData, spikingData]) => {
+        if (themesData.themes) {
+          setThemes(themesData.themes);
+          if (themesData.themes.length > 0) {
+            setSelectedTheme(themesData.themes[0].name);
+          }
+        }
+        if (spikingData && spikingData.themes) {
+          setSpikingThemes(spikingData.themes);
+        }
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
-  const sourceData = [
-    { name: "Slack App integration", count: 2168, percentage: 45, icon: MessageSquare, color: "bg-purple-500" },
-    { name: "Support Inboxes", count: 1445, percentage: 30, icon: Mail, color: "bg-blue-500" },
-    { name: "App Store Reviews", count: 722, percentage: 15, icon: Smartphone, color: "bg-indigo-500" },
-    { name: "Web Feedback Form", count: 484, percentage: 10, icon: Globe, color: "bg-emerald-500" }
-  ];
+  // Fetch feedbacks for selected theme
+  useEffect(() => {
+    if (!selectedTheme) return;
+    setIsFeedbacksLoading(true);
+    fetch(`/api/feedback?theme=${encodeURIComponent(selectedTheme)}&limit=100`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.feedbacks) {
+          setThemeFeedbacks(data.feedbacks);
+        }
+        setIsFeedbacksLoading(false);
+      })
+      .catch(() => {
+        setIsFeedbacksLoading(false);
+      });
+  }, [selectedTheme]);
+
+  const activeThemeStats = themes.find(t => t.name === selectedTheme);
+  const totalFeedbackCount = themes.reduce((acc, curr) => acc + curr.count, 0);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -38,137 +101,188 @@ export default function TrendsPage() {
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900">Trend Analysis</h1>
         <p className="text-zinc-500 text-sm mt-1">
-          Monitor feedback volume surges, source splits, and trending keywords.
+          Monitor theme frequencies, growth spikes, and dive into matching client comments.
         </p>
       </div>
 
-      {/* Grid overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8">
-        {/* Main trend chart */}
-        <div className="glass p-6 rounded-2xl border border-zinc-200 bg-white flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-sm font-bold text-zinc-900">Weekly Feedback Volume</h3>
-              <p className="text-zinc-500 text-xs mt-0.5">Tracking message totals across support integrations.</p>
-            </div>
-            <div className="text-right">
-              <span className="text-green-600 text-xs font-bold flex items-center justify-end gap-1">
-                <ArrowUpRight className="h-3.5 w-3.5" />
-                +18.4% volume spike
-              </span>
-              <span className="text-[10px] text-zinc-400 block">Compared to average</span>
-            </div>
-          </div>
-
-          {/* SVG volume chart */}
-          <div className="h-60 w-full relative flex items-end">
-            <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="gradient-trends" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#818cf8" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#818cf8" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              <line x1="0" y1="10" x2="100" y2="10" stroke="#e4e4e7" strokeWidth="0.1" strokeDasharray="1,1" />
-              <line x1="0" y1="20" x2="100" y2="20" stroke="#e4e4e7" strokeWidth="0.1" strokeDasharray="1,1" />
-              <line x1="0" y1="30" x2="100" y2="30" stroke="#e4e4e7" strokeWidth="0.1" strokeDasharray="1,1" />
-              
-              {/* Bars chart */}
-              <rect x="5" y="15" width="6" height="25" fill="#f4f4f5" stroke="#e4e4e7" strokeWidth="0.5" rx="1.5" />
-              <rect x="20" y="22" width="6" height="18" fill="#f4f4f5" stroke="#e4e4e7" strokeWidth="0.5" rx="1.5" />
-              <rect x="35" y="10" width="6" height="30" fill="#f4f4f5" stroke="#e4e4e7" strokeWidth="0.5" rx="1.5" />
-              <rect x="50" y="18" width="6" height="22" fill="#f4f4f5" stroke="#e4e4e7" strokeWidth="0.5" rx="1.5" />
-              <rect x="65" y="8" width="6" height="32" fill="#e0e7ff" stroke="#a5b4fc" strokeWidth="0.5" rx="1.5" />
-              <rect x="80" y="12" width="6" height="28" fill="#c7d2fe" stroke="#6366f1" strokeWidth="0.5" rx="1.5" />
-              <rect x="91" y="5" width="6" height="35" fill="url(#gradient-trends)" stroke="#818cf8" strokeWidth="0.5" rx="1.5" />
-            </svg>
-            <div className="absolute bottom-0 inset-x-0 flex justify-between text-[9px] text-zinc-400 font-semibold font-mono pt-2 border-t border-zinc-200">
-              <span>May</span>
-              <span>Jun</span>
-              <span>Jul</span>
-            </div>
-          </div>
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center h-96 gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <p className="text-zinc-500 text-sm font-semibold">Running theme trend analysis...</p>
         </div>
-
-        {/* Source Channels splitting */}
-        <div className="glass p-6 rounded-2xl border border-zinc-200 bg-white flex flex-col justify-between shadow-sm">
-          <div>
-            <h3 className="text-sm font-bold text-zinc-900 mb-1">Feedback Channels</h3>
-            <p className="text-zinc-500 text-xs mb-6">Percentage allocation of inbound transcripts.</p>
-          </div>
-
-          <div className="space-y-4">
-            {sourceData.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-semibold text-zinc-505 text-zinc-500">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-3.5 w-3.5 text-zinc-400" />
-                      <span className="truncate">{item.name}</span>
-                    </div>
-                    <span>{item.percentage}% ({item.count})</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-zinc-100 overflow-hidden">
-                    <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.percentage}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Keywords analysis cloud card */}
-      <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-bold text-zinc-900 mb-2">Trending Keywords</h3>
-        <p className="text-zinc-500 text-xs mb-6">Keywords flagged by AI with volume increases this week.</p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {keywords.map((kw) => {
-            const isActive = kw.name === activeKeyword;
-            return (
-              <div
-                key={kw.name}
-                onClick={() => setActiveKeyword(kw.name)}
-                className={`p-4 rounded-xl border transition duration-150 cursor-pointer flex flex-col gap-3 relative ${
-                  isActive 
-                    ? "bg-indigo-50 border-indigo-200 shadow-md shadow-indigo-650/5" 
-                    : "bg-zinc-50 border-zinc-200 hover:border-zinc-300"
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <Tag className={`h-4 w-4 ${isActive ? "text-indigo-600" : "text-zinc-400"}`} />
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
-                    kw.trend === "up" 
-                      ? "bg-green-50 text-green-600 border border-green-100" 
-                      : kw.trend === "down"
-                        ? "bg-zinc-100 text-zinc-550 border border-zinc-200"
-                        : "bg-amber-50 text-amber-600 border border-amber-100"
-                  }`}>
-                    {kw.trend === "up" ? "▲ UP" : kw.trend === "down" ? "▼ DOWN" : "■ STABLE"}
+      ) : (
+        <>
+          {/* Spiking & Growth Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Spiking Themes List */}
+            <div className="glass p-6 rounded-2xl border border-zinc-200 bg-white lg:col-span-2 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-zinc-900">Spiking Themes & surge rates</h3>
+                  <span className="inline-flex items-center gap-1 text-[10px] text-red-650 bg-red-50 border border-red-100 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    <TrendingUp className="h-3 w-3" />
+                    Live alerts
                   </span>
                 </div>
-
-                <div>
-                  <p className="text-xs font-bold text-zinc-900 truncate">{kw.name}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">{kw.volume} tickets flagged</p>
-                </div>
+                <p className="text-zinc-500 text-xs mb-6">Themes experiencing a surge in volume (last 7 days vs previous 7 days).</p>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Selected Keyword details mockup */}
-        <div className="mt-6 bg-zinc-50 border border-zinc-200 rounded-xl p-5 space-y-3 shadow-inner">
-          <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-            Analysis Details: <span className="text-indigo-700 text-sm lowercase tracking-normal font-bold font-sans">"{activeKeyword}"</span>
-          </h4>
-          <p className="text-xs text-zinc-700 leading-relaxed max-w-4xl">
-            This issue represents {keywords.find(k => k.name === activeKeyword)?.volume || 10} customer reports this week. Our AI classified it as a primary priority item due to multiple user workspace complaints in Safari client settings.
-          </p>
-        </div>
-      </div>
+              {spikingThemes.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {spikingThemes.map((theme) => (
+                    <div
+                      key={theme.name}
+                      onClick={() => setSelectedTheme(theme.name)}
+                      className={`p-4 rounded-xl border transition cursor-pointer flex flex-col gap-3 relative ${
+                        selectedTheme === theme.name 
+                          ? "bg-indigo-50 border-indigo-200" 
+                          : "bg-zinc-50 border-zinc-200 hover:border-zinc-300"
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <Tag className={`h-4 w-4 ${selectedTheme === theme.name ? "text-indigo-600" : "text-zinc-400"}`} />
+                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                          theme.growthPercent > 0 
+                            ? "bg-red-50 text-red-600 border border-red-100" 
+                            : "bg-zinc-100 text-zinc-500 border border-zinc-200"
+                        }`}>
+                          {theme.growthPercent > 0 ? `+${theme.growthPercent}%` : `0%`}
+                        </span>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold text-zinc-900 truncate">{theme.name}</p>
+                        <p className="text-[10px] text-zinc-500 mt-0.5">{theme.recentCount} tickets recently</p>
+                      </div>
+
+                      {theme.isSpiking && (
+                        <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center text-xs text-zinc-400 border border-dashed border-zinc-200 rounded-2xl">
+                  Not enough historical volume to compare spiking ratios.
+                </div>
+              )}
+            </div>
+
+            {/* Channels & theme splits */}
+            <div className="glass p-6 rounded-2xl border border-zinc-200 bg-white flex flex-col justify-between shadow-sm">
+              <div>
+                <h3 className="text-sm font-bold text-zinc-900 mb-1">Theme Allocations</h3>
+                <p className="text-zinc-500 text-xs mb-6">Percentage share of total feedback in database.</p>
+              </div>
+
+              <div className="space-y-4">
+                {themes.length > 0 ? (
+                  themes.slice(0, 4).map((theme, idx) => {
+                    const percentage = totalFeedbackCount > 0 ? Math.round((theme.count / totalFeedbackCount) * 100) : 0;
+                    const colors = ["bg-indigo-500", "bg-purple-500", "bg-pink-500", "bg-sky-500"];
+                    return (
+                      <div key={theme.id} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-semibold text-zinc-505 text-zinc-500">
+                          <span className="truncate">{theme.name}</span>
+                          <span>{percentage}% ({theme.count})</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                          <div className={`h-full ${colors[idx % colors.length]} rounded-full`} style={{ width: `${percentage}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12 text-xs text-zinc-400">
+                    No theme records discovered.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Theme feed Explorer */}
+          <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-zinc-150 pb-5 mb-5 flex-wrap gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-zinc-900">
+                  Theme Explorer: <span className="text-indigo-650 text-indigo-600">"{selectedTheme}"</span>
+                </h3>
+                <p className="text-zinc-500 text-xs mt-0.5">Explore the customer quotes, feedback channels, and timestamps behind this theme cluster.</p>
+              </div>
+
+              {activeThemeStats && (
+                <div className="flex items-center gap-3">
+                  <div className="text-xs bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-1.5 font-bold text-zinc-650">
+                    Sentiment Split: 
+                    <span className="text-green-600 ml-1.5">😊 {activeThemeStats.sentimentDistribution.positive}</span>
+                    <span className="text-zinc-400 ml-2">😐 {activeThemeStats.sentimentDistribution.neutral}</span>
+                    <span className="text-red-600 ml-2">😡 {activeThemeStats.sentimentDistribution.negative}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {isFeedbacksLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+                <p className="text-zinc-500 text-xs font-semibold">Retrieving tickets...</p>
+              </div>
+            ) : themeFeedbacks.length > 0 ? (
+              <div className="divide-y divide-zinc-100 max-h-96 overflow-y-auto pr-2">
+                {themeFeedbacks.map((fb) => {
+                  const dateLabel = new Date(fb.createdAt).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  });
+
+                  return (
+                    <div key={fb.id} className="py-4 first:pt-0 last:pb-0 space-y-1.5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-zinc-900">
+                          {fb.customerName || "Anonymous Customer"}
+                        </span>
+                        {fb.customerEmail && (
+                          <span className="text-[10px] text-zinc-400 font-mono">({fb.customerEmail})</span>
+                        )}
+                        <span className="text-[10px] text-zinc-300">•</span>
+                        <span className="text-[10px] text-zinc-500">{dateLabel}</span>
+                        <span className="text-[10px] text-zinc-300">•</span>
+                        <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider bg-zinc-100 border border-zinc-200 text-zinc-500 font-mono">
+                          {fb.channel}
+                        </span>
+                        <span className="text-[10px] text-zinc-300">•</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                          fb.sentiment === "Positive" 
+                            ? "bg-green-50 text-green-600 border border-green-100" 
+                            : fb.sentiment === "Negative"
+                              ? "bg-red-50 text-red-600 border border-red-100"
+                              : "bg-zinc-100 text-zinc-500 border border-zinc-200"
+                        }`}>
+                          {fb.sentiment}
+                        </span>
+                      </div>
+                      <p className="text-sm text-zinc-700 leading-relaxed font-semibold">
+                        {fb.content}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-16 border border-dashed border-zinc-250 border-zinc-200 rounded-2xl flex flex-col items-center justify-center gap-2">
+                <Inbox className="h-8 w-8 text-zinc-400 opacity-40" />
+                <p className="text-zinc-500 text-xs font-semibold">No feedback entries linked to this theme.</p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
