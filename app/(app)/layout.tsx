@@ -61,9 +61,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Mobile Top Header */}
       <header className="md:hidden flex items-center justify-between px-6 py-4 bg-zinc-50/80 border-b border-zinc-200 sticky top-0 z-50 backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold text-xs">
-            ◆
-          </div>
+          <img
+            src="/loop icon.png"
+            alt="LOOP Logo"
+            className="h-7 w-7 object-contain rounded-lg"
+          />
           <span className="text-sm font-bold tracking-tight text-zinc-900">LOOP</span>
         </Link>
         <button
@@ -84,9 +86,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {/* Logo & Mobile close button */}
           <div className="flex items-center justify-between px-2">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-sky-500 text-white font-bold">
-                ◆
-              </div>
+              <img
+                src="/loop icon.png"
+                alt="LOOP Logo"
+                className="h-8 w-8 object-contain rounded-lg"
+              />
               <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-650 bg-clip-text text-transparent font-extrabold">
                 LOOP
               </span>
