@@ -160,3 +160,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message || "Failed to ingest feedback" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = getSessionUser(request);
+    if (!user?.workspaceId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (user.role !== "ADMIN" && user.role !== "ANALYST") {
+      return NextResponse.json({ error: "Forbidden: You do not have permission to delete feedback." }, { status: 403 });
+    }
+
+    const { feedbackIds } = await request.json();
+    if (!Array.isArray(feedbackIds) || feedbackIds.length === 0 || feedbackIds.some((id) => typeof id !== "string")) {
+      return NextResponse.json({ error: "Select at least one feedback item to delete" }, { status: 400 });
+    }
+
+    const result = await db.feedback.deleteMany({ where: { id: { in: feedbackIds }, workspaceId: user.workspaceId } });
+    return NextResponse.json({ success: true, deletedCount: result.count });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to delete feedback" }, { status: 500 });
+  }
+}

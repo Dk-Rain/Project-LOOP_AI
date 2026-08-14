@@ -99,10 +99,12 @@ export default function TrendsPage() {
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900">Trend Analysis</h1>
-        <p className="text-zinc-500 text-sm mt-1">
-          Monitor theme frequencies, growth spikes, and dive into matching client comments.
-        </p>
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900">Trend Analysis</h1>
+          <p className="text-zinc-500 text-sm mt-1">
+            Monitor theme frequencies, growth spikes, and dive into matching client comments.
+          </p>
+        </div>
       </div>
 
       {isLoading ? (
@@ -115,7 +117,7 @@ export default function TrendsPage() {
           {/* Spiking & Growth Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Spiking Themes List */}
-            <div className="glass p-6 rounded-2xl border border-zinc-200 bg-white lg:col-span-2 shadow-sm flex flex-col justify-between">
+            <div className="glass p-4 sm:p-6 rounded-2xl border border-zinc-200 bg-white lg:col-span-2 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-bold text-zinc-900">Spiking Themes & surge rates</h3>
@@ -172,7 +174,7 @@ export default function TrendsPage() {
             </div>
 
             {/* Channels & theme splits */}
-            <div className="glass p-6 rounded-2xl border border-zinc-200 bg-white flex flex-col justify-between shadow-sm">
+            <div className="glass p-4 sm:p-6 rounded-2xl border border-zinc-200 bg-white flex flex-col justify-between shadow-sm">
               <div>
                 <h3 className="text-sm font-bold text-zinc-900 mb-1">Theme Allocations</h3>
                 <p className="text-zinc-500 text-xs mb-6">Percentage share of total feedback in database.</p>
@@ -190,7 +192,7 @@ export default function TrendsPage() {
                           <span>{percentage}% ({theme.count})</span>
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-zinc-100 overflow-hidden">
-                          <div className={`h-full ${colors[idx % colors.length]} rounded-full`} style={{ width: `${percentage}%` }} />
+                          <div className={`h-full ${colors[idx % colors.length]} rounded-full`} style={{ inlineSize: `${percentage}%` }} />
                         </div>
                       </div>
                     );
@@ -205,7 +207,7 @@ export default function TrendsPage() {
           </div>
 
           {/* Theme feed Explorer */}
-          <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <div className="glass rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-zinc-150 pb-5 mb-5 flex-wrap gap-4">
               <div>
                 <h3 className="text-lg font-bold text-zinc-900">
@@ -215,7 +217,7 @@ export default function TrendsPage() {
               </div>
 
               {activeThemeStats && (
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <div className="text-xs bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-1.5 font-bold text-zinc-650">
                     Sentiment Split: 
                     <span className="text-green-600 ml-1.5">😊 {activeThemeStats.sentimentDistribution.positive}</span>
@@ -243,7 +245,7 @@ export default function TrendsPage() {
 
                   return (
                     <div key={fb.id} className="py-4 first:pt-0 last:pb-0 space-y-1.5">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <span className="text-xs font-bold text-zinc-900">
                           {fb.customerName || "Anonymous Customer"}
                         </span>
@@ -267,7 +269,7 @@ export default function TrendsPage() {
                           {fb.sentiment}
                         </span>
                       </div>
-                      <p className="text-sm text-zinc-700 leading-relaxed font-semibold">
+                      <p className="text-sm text-zinc-700 leading-relaxed font-semibold break-words">
                         {fb.content}
                       </p>
                     </div>

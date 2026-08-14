@@ -137,7 +137,7 @@ export default function ReportsPage() {
           {/* Left Side: Parameters panel */}
           <div className="space-y-6 print:hidden">
             {/* Create Report */}
-            <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <div className="glass rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6 shadow-sm">
               <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2 mb-4">
                 <Settings className="h-4 w-4 text-zinc-405" />
                 Configure VoC Period
@@ -198,7 +198,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Historical Reports List */}
-            <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
+              <div className="glass rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6 shadow-sm space-y-4">
               <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Historical Reports</h3>
               
               {reports.length > 0 ? (
@@ -229,7 +229,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Right Side: PDF Preview */}
-          <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 flex flex-col min-h-[500px] shadow-sm print:border-none print:shadow-none print:p-0">
+          <div className="glass rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6 flex flex-col min-h-[400px] sm:min-h-[500px] shadow-sm print:border-none print:shadow-none print:p-0">
             {isGenerating ? (
               <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
                 <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
@@ -241,7 +241,7 @@ export default function ReportsPage() {
             ) : selectedReport ? (
               <div className="flex-1 flex flex-col justify-between">
                 {/* PDF Container */}
-                <div className="border border-zinc-200 bg-zinc-50/30 rounded-xl p-8 space-y-6 flex-1 shadow-inner relative overflow-hidden print:border-none print:bg-white print:p-0 print:shadow-none">
+                <div className="border border-zinc-200 bg-zinc-50/30 rounded-xl p-4 sm:p-8 space-y-6 flex-1 shadow-inner relative overflow-hidden print:border-none print:bg-white print:p-0 print:shadow-none">
                   <div className="absolute top-0 right-0 p-4 font-mono text-[9px] text-zinc-400 print:hidden">
                     ID: {selectedReport.id}
                   </div>

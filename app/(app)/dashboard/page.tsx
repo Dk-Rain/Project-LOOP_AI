@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { 
   MessageSquare, 
   Smile, 
@@ -75,27 +76,6 @@ export default function DashboardPage() {
   const recentFeedback = data?.recentFeedbacks || [];
   const themeCounts = data?.themeCounts || [];
   const volumePoints = data?.volumePoints || [];
-
-  // Generate SVG chart path based on volumePoints counts
-  const maxVal = Math.max(...volumePoints.map(p => p.count), 5);
-  const pointsString = volumePoints.map((p, idx) => {
-    const x = idx * 33.3; // 4 points -> 0, 33.3, 66.6, 100
-    const y = 35 - (p.count / maxVal) * 30; // Scale to height of 40 (leaves padding)
-    return `${x},${y}`;
-  });
-
-  const pathD = pointsString.length > 0
-    ? `M 0,${35 - (volumePoints[0]?.count / maxVal) * 30} ` + 
-      volumePoints.slice(1).map((p, idx) => {
-        const x = (idx + 1) * 33.3;
-        const y = 35 - (p.count / maxVal) * 30;
-        return `L ${x},${y}`;
-      }).join(" ")
-    : "M 0,35 L 100,35";
-
-  const areaD = pointsString.length > 0
-    ? `${pathD} L 100,40 L 0,40 Z`
-    : "M 0,35 L 100,35 L 100,40 L 0,40 Z";
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -208,41 +188,27 @@ export default function DashboardPage() {
                 </span>
               </div>
 
-              {/* SVG Line Graph */}
-              <div className="h-56 w-full relative flex items-end">
+              <div className="h-64 w-full">
                 {volumePoints.length > 0 ? (
-                  <>
-                    <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={volumePoints} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
                       <defs>
-                        <linearGradient id="gradient-chart" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
-                          <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                        <linearGradient id="feedbackVolumeGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <line x1="0" y1="10" x2="100" y2="10" stroke="#e4e4e7" strokeWidth="0.1" strokeDasharray="1,1" />
-                      <line x1="0" y1="20" x2="100" y2="20" stroke="#e4e4e7" strokeWidth="0.1" strokeDasharray="1,1" />
-                      <line x1="0" y1="30" x2="100" y2="30" stroke="#e4e4e7" strokeWidth="0.1" strokeDasharray="1,1" />
-                      
-                      <path d={areaD} fill="url(#gradient-chart)" />
-                      <path d={pathD} fill="none" stroke="#6366f1" strokeWidth="1.5" />
-
-                      {/* Dots on points */}
-                      {volumePoints.map((p, idx) => (
-                        <circle
-                          key={idx}
-                          cx={idx * 33.3}
-                          cy={35 - (p.count / maxVal) * 30}
-                          r="1.2"
-                          fill="#818cf8"
-                        />
-                      ))}
-                    </svg>
-                    <div className="absolute bottom-0 inset-x-0 flex justify-between text-[9px] text-zinc-400 font-semibold font-mono pt-2 border-t border-zinc-150">
-                      {volumePoints.map((p, idx) => (
-                        <span key={idx}>{timeRange === "7d" ? `Day ${idx * 2 + 1}` : `Interval ${idx + 1}`} ({p.count})</span>
-                      ))}
-                    </div>
-                  </>
+                      <CartesianGrid vertical={false} stroke="#e4e4e7" strokeDasharray="3 3" />
+                      <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#71717a", fontSize: 11 }} dy={8} />
+                      <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#71717a", fontSize: 11 }} />
+                      <Tooltip
+                        cursor={{ stroke: "#a5b4fc", strokeWidth: 1 }}
+                        contentStyle={{ borderRadius: 12, border: "1px solid #e4e4e7", boxShadow: "0 8px 24px rgba(0,0,0,0.08)", fontSize: 12 }}
+                        formatter={(value) => [Number(value ?? 0), "Feedback"]}
+                      />
+                      <Area type="monotone" dataKey="count" name="Feedback" stroke="#6366f1" strokeWidth={3} fill="url(#feedbackVolumeGradient)" activeDot={{ r: 5, fill: "#4f46e5", stroke: "#fff", strokeWidth: 2 }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 ) : (
                   <div className="w-full text-center py-12 text-xs text-zinc-400">
                     Not enough volume data in range.

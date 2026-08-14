@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, FormEvent } from "react";
-import { Zap, MessageSquare, HelpCircle, FileText, Frown, Smile, Meh } from "lucide-react";
+import { MessageSquare, HelpCircle, FileText, Frown, Smile, Meh } from "lucide-react";
 
 interface EvidenceItem {
   id: string;
@@ -28,6 +28,7 @@ export default function AskPage() {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [userName, setUserName] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const suggestions = [
@@ -44,6 +45,18 @@ export default function AskPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => setUserName(data?.user?.name || ""))
+      .catch(() => {});
+  }, []);
+
+  const initials = (name: string) => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    return parts.length ? `${parts[0][0]}${parts.length > 1 ? parts[parts.length - 1][0] : ""}`.toUpperCase() : "?";
+  };
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
@@ -100,11 +113,11 @@ export default function AskPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto h-[calc(100vh-8.5rem)] flex flex-col">
+    <div className="space-y-6 max-w-5xl mx-auto md:h-[calc(100vh-8.5rem)] flex flex-col">
       {/* Title */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 flex items-center gap-2.5">
-          <Zap className="h-7 w-7 text-indigo-650 text-indigo-600 animate-pulse" />
+          <img src="/loop icon.png" alt="LOOP AI" className="h-7 w-7 rounded-lg object-contain" />
           Ask LOOP AI
         </h1>
         <p className="text-zinc-500 text-sm mt-1">
@@ -115,20 +128,20 @@ export default function AskPage() {
       {/* Main chat window container */}
       <div className="flex-1 min-h-0 glass rounded-2xl border border-zinc-200 bg-white flex flex-col justify-between shadow-sm">
         {/* Messages Feed */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 max-h-[65vh] md:max-h-none">
           {messages.map((msg, index) => {
             const isAi = msg.role === "assistant";
             return (
-              <div key={index} className={`flex gap-4 ${isAi ? "justify-start" : "justify-end"}`}>
+              <div key={index} className={`flex gap-2 sm:gap-4 ${isAi ? "justify-start" : "justify-end"}`}>
                 {/* Avatar */}
                 {isAi && (
                   <div className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                    <Zap className="h-4.5 w-4.5" />
+                    <img src="/loop icon.png" alt="LOOP AI" className="h-5 w-5 rounded object-contain" />
                   </div>
                 )}
 
                 {/* Bubble content */}
-                <div className="space-y-3 max-w-2xl">
+                <div className="space-y-3 max-w-[calc(100%-3rem)] sm:max-w-2xl">
                   <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
                     isAi 
                       ? "bg-zinc-50 text-zinc-800 border border-zinc-150 shadow-sm" 
@@ -167,11 +180,8 @@ export default function AskPage() {
 
                 {/* User avatar */}
                 {!isAi && (
-                  <div className="h-9 w-9 rounded-xl bg-zinc-100 border border-zinc-200 text-zinc-500 flex items-center justify-center shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                  <div className="h-9 w-9 rounded-xl bg-zinc-100 border border-zinc-200 text-zinc-600 text-xs font-bold flex items-center justify-center shrink-0" aria-label={`${userName || "User"} avatar`}>
+                    {initials(userName)}
                   </div>
                 )}
               </div>
@@ -182,7 +192,7 @@ export default function AskPage() {
           {isTyping && (
             <div className="flex gap-4 justify-start">
               <div className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-650 flex items-center justify-center shrink-0">
-                <Zap className="h-4.5 w-4.5 animate-spin" />
+                <img src="/loop icon.png" alt="LOOP AI" className="h-5 w-5 rounded object-contain animate-pulse" />
               </div>
               <div className="bg-zinc-50 border border-zinc-150 p-4 rounded-2xl text-xs text-zinc-500 flex items-center gap-2 font-semibold shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" />
@@ -197,7 +207,7 @@ export default function AskPage() {
 
         {/* Suggestion Chips */}
         {messages.length === 1 && (
-          <div className="px-6 py-3 border-t border-zinc-150 bg-zinc-50">
+          <div className="px-4 sm:px-6 py-3 border-t border-zinc-150 bg-zinc-50">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <HelpCircle className="h-3.5 w-3.5" /> Suggested Queries
             </p>
@@ -216,7 +226,7 @@ export default function AskPage() {
         )}
 
         {/* Bottom Input Area */}
-        <div className="p-4 border-t border-zinc-200 bg-zinc-50/50">
+        <div className="p-3 sm:p-4 border-t border-zinc-200 bg-zinc-50/50">
           <form onSubmit={handleSubmit} className="flex gap-3">
             <input
               type="text"

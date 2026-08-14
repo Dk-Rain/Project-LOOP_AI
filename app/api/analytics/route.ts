@@ -80,12 +80,15 @@ export async function GET(request: NextRequest) {
     const percentNegative = totalCount > 0 ? Math.round((negativeCount / totalCount) * 100) : 0;
     
     // Average Sentiment Score calculation
+    // Compute average sentiment score and CSAT.
     const averageScoreResult = await db.feedback.aggregate({
       where: { workspaceId: user.workspaceId, createdAt: { gte: startDate } },
       _avg: { sentimentScore: true }
     });
     const avgScore = averageScoreResult._avg.sentimentScore !== null ? parseFloat((averageScoreResult._avg.sentimentScore).toFixed(2)) : 0.0;
-    const csatPercent = Math.round(((avgScore + 1) / 2) * 100); // map -1..1 to 0..100%
+
+    // CSAT: percentage of feedback marked as Positive. If no feedback, default to 0.
+    const csatPercent = totalCount > 0 ? Math.round((positiveCount / totalCount) * 100) : 0;
 
     // Feedback volume over time (split into 4 intervals/weeks)
     const intervalDays = timeRange === "7d" ? 1.75 : timeRange === "90d" ? 22.5 : 7.5; // days per interval

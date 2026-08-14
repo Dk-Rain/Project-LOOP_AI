@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { 
   Search, 
   Filter, 
@@ -17,7 +18,8 @@ import {
   ChevronRight,
   Sparkles,
   User,
-  ShieldAlert
+  ShieldAlert,
+  Trash2
 } from "lucide-react";
 
 interface ThemeItem {
@@ -40,13 +42,15 @@ interface Feedback {
   themes: ThemeItem[];
 }
 
-export default function InboxPage() {
+function InboxPageContent() {
+  const searchParams = useSearchParams();
   const [currentUser, setCurrentUser] = useState<{ role: string } | null>(null);
   
   // Data lists
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [themeOptions, setThemeOptions] = useState<string[]>([]);
   const [activeFeedback, setActiveFeedback] = useState<Feedback | null>(null);
+  const [selectedFeedbackIds, setSelectedFeedbackIds] = useState<string[]>([]);
 
   // Loading States
   const [isLoading, setIsLoading] = useState(true);
@@ -61,6 +65,12 @@ export default function InboxPage() {
   const [themeFilter, setThemeFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
+    const querySearch = searchParams.get("search") || "";
+    setSearch((current) => current === querySearch ? current : querySearch);
+    setPage(1);
+  }, [searchParams]);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -78,6 +88,21 @@ export default function InboxPage() {
   const [newEmail, setNewEmail] = useState("");
   const [csvText, setCsvText] = useState("");
   const [csvStatusMsg, setCsvStatusMsg] = useState("");
+
+  const handleCsvFile = (file?: File) => {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setCsvStatusMsg("Please choose a CSV file.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCsvText(typeof reader.result === "string" ? reader.result : "");
+      setCsvStatusMsg(`Loaded ${file.name}. Ready to import.`);
+    };
+    reader.onerror = () => setCsvStatusMsg("Could not read that CSV file.");
+    reader.readAsText(file);
+  };
 
   // Fetch current user role
   useEffect(() => {
@@ -295,8 +320,27 @@ export default function InboxPage() {
     }
   };
 
+  const toggleFeedbackSelection = (feedbackId: string) => {
+    setSelectedFeedbackIds((current) => current.includes(feedbackId) ? current.filter((id) => id !== feedbackId) : [...current, feedbackId]);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!selectedFeedbackIds.length || isReadOnly) return;
+    if (!window.confirm(`Delete ${selectedFeedbackIds.length} selected feedback item${selectedFeedbackIds.length === 1 ? "" : "s"}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch("/api/feedback", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ feedbackIds: selectedFeedbackIds }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete feedback");
+      setSelectedFeedbackIds([]);
+      setActiveFeedback(null);
+      fetchFeedbacks();
+    } catch (error: any) {
+      alert(error.message || "Failed to delete feedback");
+    }
+  };
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto h-[calc(100vh-8.5rem)] flex flex-col relative">
+    <div className="space-y-6 max-w-7xl mx-auto md:h-[calc(100vh-8.5rem)] flex flex-col relative">
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -305,7 +349,7 @@ export default function InboxPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isReadOnly ? (
             <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-500 text-xs font-bold">
               <ShieldAlert className="h-4 w-4 text-zinc-400" />
@@ -337,13 +381,20 @@ export default function InboxPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 {isSimulating ? "Seeding..." : "Simulate Channel"}
               </button>
+
+              {selectedFeedbackIds.length > 0 && (
+                <button onClick={handleDeleteSelected} className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-700 hover:bg-red-100 transition">
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete ({selectedFeedbackIds.length})
+                </button>
+              )}
             </>
           )}
         </div>
       </div>
 
       {/* Control panel (Filters) */}
-      <div className="bg-zinc-50/50 border border-zinc-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 shadow-sm">
+      <div className="bg-zinc-50/50 border border-zinc-200 rounded-2xl p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 shadow-sm">
         {/* Search */}
         <div className="relative lg:col-span-2">
           <input
@@ -420,7 +471,7 @@ export default function InboxPage() {
       </div>
 
       {/* Main Workspace (Dual Pane Layout) */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1.1fr_1.25fr] gap-6">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1.1fr_1.25fr] gap-4 sm:gap-6">
         {/* Left Side: Ticket list */}
         <div className="glass rounded-2xl border border-zinc-200 bg-white overflow-y-auto flex flex-col min-h-0 shadow-sm">
           {isLoading ? (
@@ -437,6 +488,12 @@ export default function InboxPage() {
           ) : (
             <>
               <div className="divide-y divide-zinc-100 flex-1 overflow-y-auto">
+                {!isReadOnly && (
+                  <label className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-50 border-b border-zinc-100">
+                    <input type="checkbox" checked={feedbacks.length > 0 && feedbacks.every((feedback) => selectedFeedbackIds.includes(feedback.id))} onChange={(event) => setSelectedFeedbackIds(event.target.checked ? feedbacks.map((feedback) => feedback.id) : [])} className="h-3.5 w-3.5 accent-indigo-600" />
+                    Select this page
+                  </label>
+                )}
                 {feedbacks.map((fb) => {
                   const isActive = fb.id === activeFeedback?.id;
                   const dateLabel = new Date(fb.createdAt).toLocaleDateString(undefined, {
@@ -459,6 +516,7 @@ export default function InboxPage() {
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
+                          {!isReadOnly && <input type="checkbox" checked={selectedFeedbackIds.includes(fb.id)} onChange={() => toggleFeedbackSelection(fb.id)} onClick={(event) => event.stopPropagation()} aria-label={`Select feedback from ${fb.customerName || "anonymous customer"}`} className="h-3.5 w-3.5 accent-indigo-600" />}
                           <span className="text-xs font-bold text-zinc-900">
                             {fb.customerName || "Anonymous Customer"}
                           </span>
@@ -538,8 +596,8 @@ export default function InboxPage() {
         {activeFeedback ? (
           <div className="glass rounded-2xl border border-zinc-200 bg-white overflow-y-auto flex flex-col min-h-0 shadow-sm relative">
             {/* Header info */}
-            <div className="p-6 border-b border-zinc-150 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="p-4 sm:p-6 border-b border-zinc-150 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
                 <div className="h-10 w-10 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-500">
                   <User className="h-5 w-5" />
                 </div>
@@ -547,14 +605,14 @@ export default function InboxPage() {
                   <h3 className="text-sm font-bold text-zinc-900">
                     {activeFeedback.customerName || "Anonymous Customer"}
                   </h3>
-                  <p className="text-[10px] text-zinc-500 font-medium">
+                  <p className="text-[10px] text-zinc-500 font-medium break-words">
                     {activeFeedback.customerEmail || "No Email Provided"} • Channel: <span className="font-bold">{activeFeedback.channel}</span>
                   </p>
                 </div>
               </div>
 
               {/* Status and Action Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-end sm:self-auto">
                 <select
                   value={activeFeedback.status}
                   disabled={isReadOnly}
@@ -578,7 +636,7 @@ export default function InboxPage() {
             </div>
 
             {/* AI Tags display */}
-            <div className="px-6 py-4 bg-zinc-50/50 border-b border-zinc-150 flex flex-wrap gap-3">
+            <div className="px-4 sm:px-6 py-4 bg-zinc-50/50 border-b border-zinc-150 flex flex-wrap gap-2 sm:gap-3">
               <div className="text-xs bg-white rounded-xl border border-zinc-200 px-3 py-1.5 flex items-center gap-2 shadow-sm">
                 <span className="text-zinc-500">Sentiment Score:</span>
                 <span className={`font-bold ${
@@ -624,7 +682,7 @@ export default function InboxPage() {
 
             {/* Ingestion Rationale */}
             {activeFeedback.rationale && (
-              <div className="mx-6 mt-6 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 text-xs text-indigo-850 flex gap-2">
+              <div className="mx-4 sm:mx-6 mt-4 sm:mt-6 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 text-xs text-indigo-850 flex gap-2">
                 <div className="text-indigo-600 font-bold text-sm">💡</div>
                 <div className="space-y-1">
                   <p className="font-bold text-indigo-900">AI Classification Rationale</p>
@@ -634,7 +692,7 @@ export default function InboxPage() {
             )}
 
             {/* Full text transcript */}
-            <div className="flex-1 p-6 text-zinc-850 leading-relaxed text-sm font-semibold whitespace-pre-line bg-white">
+            <div className="flex-1 p-4 sm:p-6 text-zinc-850 leading-relaxed text-sm font-semibold whitespace-pre-line bg-white break-words">
               {activeFeedback.content}
             </div>
           </div>
@@ -648,8 +706,8 @@ export default function InboxPage() {
       {/* MODAL 1: Manual Ingestion */}
       {manualModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-lg shadow-xl relative overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-150 flex items-center justify-between">
+          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto shadow-xl relative">
+            <div className="px-4 sm:px-6 py-4 border-b border-zinc-150 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-900">Add Customer Feedback</h3>
               <button 
                 onClick={() => setManualModalOpen(false)}
@@ -659,8 +717,8 @@ export default function InboxPage() {
               </button>
             </div>
             
-            <form onSubmit={handleManualSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleManualSubmit} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">Customer Name</label>
                   <input
@@ -732,8 +790,8 @@ export default function InboxPage() {
       {/* MODAL 2: CSV Import */}
       {csvModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-lg shadow-xl relative overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-150 flex items-center justify-between">
+          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto shadow-xl relative">
+            <div className="px-4 sm:px-6 py-4 border-b border-zinc-150 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-900">Bulk Import Feedback (CSV Format)</h3>
               <button 
                 onClick={() => setCsvModalOpen(false)}
@@ -743,7 +801,7 @@ export default function InboxPage() {
               </button>
             </div>
             
-            <form onSubmit={handleCsvSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleCsvSubmit} className="p-4 sm:p-6 space-y-4">
               <p className="text-xs text-zinc-500 leading-relaxed font-medium">
                 Paste comma-separated rows. The system will parse each row, run sentiment and theme classification, and save them.
                 <br />
@@ -751,6 +809,12 @@ export default function InboxPage() {
               </p>
 
               <div className="space-y-1">
+                <label className="flex w-fit cursor-pointer items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition">
+                  <Upload className="h-3.5 w-3.5 text-indigo-600" />
+                  Attach CSV file
+                  <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(event) => handleCsvFile(event.target.files?.[0])} />
+                </label>
+                <p className="text-[10px] text-zinc-400">Or paste CSV rows below.</p>
                 <textarea
                   rows={6}
                   value={csvText}
@@ -785,5 +849,13 @@ export default function InboxPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function InboxPage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-zinc-500">Loading feedback inbox...</div>}>
+      <InboxPageContent />
+    </Suspense>
   );
 }

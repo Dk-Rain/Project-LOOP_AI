@@ -24,6 +24,7 @@ model Workspace {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   users     User[]
+  invitations Invitation[]
   feedbacks Feedback[]
   themes    Theme[]
   reports   Report[]
@@ -39,6 +40,18 @@ model User {
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  email       String
+  role        Role
+  token       String   @unique
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  accepted    Boolean  @default(false)
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
 }
 
 model Feedback {

@@ -1,101 +1,165 @@
-# LOOP — AI Customer-Feedback Intelligence Platform
+# LOOP — Customer Feedback Intelligence Platform
 
-LOOP is a premium, multi-tenant SaaS customer feedback intelligence platform built to ingest, auto-classify, cluster, and analyze customer feedback logs from multiple channels (Zendesk, Intercom, App Store, Discord, etc.) using Anthropic's Claude 3.5 Sonnet.
+LOOP is a multi-tenant customer-feedback intelligence platform. Teams can bring feedback into one workspace, classify and organize it, monitor themes and sentiment, ask evidence-grounded questions, and create Voice-of-Customer (VoC) reports.
 
----
+## Features
 
-## 🚀 Getting Started
+- Cookie-based authentication and protected application routes
+- Isolated workspaces with Admin, Analyst, and Viewer roles
+- Manual feedback entry, CSV import, and simulated feedback sources
+- Automatic sentiment, feature-area, and theme classification
+- Feedback inbox with status management and reclassification
+- Dashboard analytics, theme clustering, and spiking-theme trends
+- Ask LOOP: workspace-grounded feedback Q&A with cited evidence
+- Voice-of-Customer report generation and print-to-PDF workflow
+- Workspace profile and team invitation management
 
-### 1. Prerequisite Environment
-Create a `.env` file in the root directory:
-```env
-DATABASE_URL="postgresql://postgres:admin@localhost:5432/loop"
-JWT_SECRET="your-secure-jwt-signing-secret"
-ANTHROPIC_API_KEY="your-anthropic-key-here"
+## Tech stack
+
+| Area | Technology |
+| --- | --- |
+| Web app | Next.js 14 (App Router), React 18, TypeScript |
+| UI | Tailwind CSS, Lucide React, Recharts |
+| Database | PostgreSQL, Prisma ORM with `@prisma/adapter-pg` and `pg` |
+| Authentication | Signed HTTP-only session cookie using Node.js `crypto` |
+| AI | Anthropic Claude Messages API, with a local heuristic fallback |
+| Deployment target | Vercel |
+
+## Architecture
+
+```text
+Browser
+  │
+  ▼
+Next.js App Router (pages + API route handlers)
+  │
+  ├── Authentication and RBAC
+  │
+  ├── Prisma ORM ──► PostgreSQL
+  │
+  └── AI helpers ──► Anthropic Claude API (optional)
 ```
 
-### 2. Install Dependencies
-```bash
-npm install
+All tenant-owned data is associated with a `workspaceId`. API handlers obtain the signed session, then scope reads and mutations to that workspace. Role checks are also enforced server-side: Admins manage members and workspace settings; Admins and Analysts can ingest, classify, update, and report on feedback; Viewers have read-only access.
+
+Ask LOOP first retrieves feedback from the active workspace, then passes that context to Claude when an API key is available. The application falls back to local, keyword-based classification and response generation if the API key is absent or the request fails. LOOP does not currently use embeddings or pgvector.
+
+## Project structure
+
+```text
+app/
+  (auth)/                 Login and sign-up pages
+  (app)/                  Authenticated product pages
+  api/                    Route handlers for auth, feedback, analytics, AI, reports, and members
+components/               Shared interface components
+lib/                      Database, authentication, AI, and retrieval helpers
+prisma/
+  schema.prisma           PostgreSQL data model
+  seed.ts                 Demo workspace and role accounts
+public/                   Static images and product previews
 ```
 
-### 3. Synchronize Database & Generate Types
-Apply the Prisma schema migrations and compile type indices:
-```bash
-# Push database structures to PostgreSQL
-npx prisma db push
+## Prerequisites
 
-# Rebuild local TypeScript Client types
-npx prisma generate
-```
+- Node.js 18 or later
+- npm
+- PostgreSQL
+- An Anthropic API key (optional; local AI fallbacks work without one)
+- A Vercel account only if deploying to Vercel
 
-### 4. Run the Platform Locally
-```bash
-# Start Next.js development server
-npm run dev
+## Local setup
 
-# Start visual database studio explorer (runs at http://localhost:51212)
-npx prisma studio
-```
-The application will be live at [http://localhost:3000](http://localhost:3000).
+1. Clone the repository and enter the project directory.
 
----
+   ```bash
+   git clone <repository-url>
+   cd Loop
+   ```
 
-## 🛠️ Tech Stack
-- **Framework**: Next.js 14 (App Router)
-- **Database**: PostgreSQL (synchronized via Prisma ORM v7)
-- **Database Driver Adapter**: Explicit `@prisma/adapter-pg` + native `pg` pool connector (Prisma 7 compatible)
-- **Authentication**: Custom lightweight HTTP-only cookie session JWTs signed via Node's native `crypto` HMAC-SHA256
-- **AI Classification**: Dual Engine: Anthropic Claude 3.5 Sonnet API / Heuristic Keyword Sentiment Fallback
-- **Styling**: Vanilla CSS and Tailwind-compatible layouts
+2. Install dependencies.
 
----
+   ```bash
+   npm install
+   ```
 
-## 📂 Routes & Folder Map
+3. Create a local environment file from the example.
 
-| Feature Area | Router Path | Main Component Location |
-| :--- | :--- | :--- |
-| **Landing Page** | `/` | [app/page.tsx](file:///c:/Users/LAWRENCE%20DIKE/OneDrive/Documents/Zidddo%20Intenship%20Project/Loop/app/page.tsx) |
-| **Sign Up & Workspace Register** | `/signup` | [app/(auth)/signup/page.tsx](file:///c:/Users/LAWRENCE%20DIKE/OneDrive/Documents/Zidddo%20Intenship%20Project/Loop/app/%28auth%29/signup/page.tsx) |
-| **Login portal** | `/login` | [app/(auth)/login/page.tsx](file:///c:/Users/LAWRENCE%20DIKE/OneDrive/Documents/Zidddo%20Intenship%20Project/Loop/app/%28auth%29/login/page.tsx) |
-| **Analytics Dashboard** | `/dashboard` | [app/(app)/dashboard/page.tsx](file:///c:/Users/LAWRENCE%20DIKE/OneDrive/Documents/Zidddo%20Intenship%20Project/Loop/app/%28app%29/dashboard/page.tsx) |
-| **Feedback Inbox Manager** | `/inbox` | [app/(app)/inbox/page.tsx](file:///c:/Users/LAWRENCE%20DIKE/OneDrive/Documents/Zidddo%20Intenship%20Project/Loop/app/%28app%29/inbox/page.tsx) |
-| **AI Q&A Grounded Chat** | `/ask` | [app/(app)/ask/page.tsx](file:///c:/Users/LAWRENCE%2520DIKE/OneDrive/Documents/Zidddo%2520Intenship%2520Project/Loop/app/%28app%29/ask/page.tsx) |
-| **Theme Clustering & Trends** | `/trends` | [app/(app)/trends/page.tsx](file:///c:/Users/LAWRENCE%20DIKE/OneDrive/Documents/Zidddo%20Intenship%20Project/Loop/app/%28app%29/trends/page.tsx) |
-| **Voice of Customer Reports** | `/reports` | [app/(app)/reports/page.tsx](file:///c:/Users/LAWRENCE%20DIKE/OneDrive/Documents/Zidddo%20Intenship%20Project/Loop/app/%28app%29/reports/page.tsx) |
-| **Workspace Settings** | `/settings` | [app/(app)/settings/page.tsx](file:///c:/Users/LAWRENCE%20DIKE/OneDrive/Documents/Zidddo%20Intenship%20Project/Loop/app/%28app%29/settings/page.tsx) |
+   ```bash
+   cp .env.example .env
+   ```
 
----
+   On PowerShell, use `Copy-Item .env.example .env` instead.
 
-## 🎯 Key Features & Tenant Security
+4. Set `DATABASE_URL` and `JWT_SECRET` in `.env`. Add `ANTHROPIC_API_KEY` to enable Claude-powered responses.
 
-### 🔐 1. Multi-Tenant Security & Isolation
-Every row stored in the database (`Feedback`, `Theme`, `Report`, `User`) is scoped strictly to a `workspaceId`. Backend API routes fetch verified user credentials from secure HTTP-only cookies and append `where: { workspaceId }` limits to all SQL queries, preventing cross-tenant access.
+5. Apply the schema and generate the Prisma client.
 
-### 🔴 2. Role-Based Access Control (RBAC)
-Supports three active user permissions:
-- **Admin**: Full workspace access and user management capability.
-- **Analyst**: Ingest manual customer records, process CSV batch imports, simulate channel integrations, and run reports.
-- **Viewer**: Read-only workspace layout access. 
-*RBAC permissions are verified on both the frontend layout state and enforced on the server-side API endpoints (`403 Forbidden` response rules).*
+   ```bash
+   npx prisma db push
+   npx prisma generate
+   ```
 
-### 🔌 3. Feedback Ingestion Channels
-Supports three entry pathways inside the Feedback Inbox:
-1. **Manual Single Form**: Adds custom logs with name and email options.
-2. **CSV Import**: Drop or paste comma-separated values (`Name,Email,Channel,Content`) to bulk ingest.
-3. **Simulated Feed**: Randomly seeds logs from integrations (Zendesk, Intercom, Discord, App Store) with automatic classification.
+6. Seed the demo workspace and accounts.
 
-### 🤖 4. AI Auto-Classification & Re-classify
-Ingested logs trigger an AI classifier which computes:
-- Sentiment ("Positive" / "Neutral" / "Negative")
-- Sentiment Score (numerical rating `-1.0 to 1.0`)
-- Theme tags association
-- Feature area categorizations
-- Detailed reasoning / rationales
-*Users with Admin/Analyst roles can click the manual re-classify trigger at any time to refresh AI metrics.*
+   ```bash
+   npx tsx prisma/seed.ts
+   ```
 
-### 🤖 5. Grounded AI Q&A Chat
-Ensures that Ask LOOP AI chatbot queries are grounded purely on customer tickets inside the workspace. The backend matches keywords in the query, pulls corresponding tickets from PostgreSQL, formats the context, and instructs Claude to generate answers citing specific client names and quotes.
+7. Start the development server at [http://localhost:3000](http://localhost:3000).
 
-### 🤖 6. Voice of Customer (VoC) Reports
-Analysts can compile executive summaries of customer logs in selected periods. Reports include sentiment spreads, top theme growths, customer quotes, and recommendations. Standard browser print layouts are configured to export styled reports to physical sheets or PDF files.
+   ```bash
+   npm run dev
+   ```
+
+To inspect the database locally, run `npx prisma studio`.
+
+## Environment variables
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma and the application |
+| `JWT_SECRET` | Yes | Secret used to sign the session cookie; use a long unique value outside local development |
+| `ANTHROPIC_API_KEY` | No | Enables Claude classification, Ask LOOP, and VoC generation |
+
+Never commit `.env` or reuse a production secret in a demo environment.
+
+## Database and demo data
+
+The data model includes workspaces, users, invitations, feedback, themes, and reports. `prisma/seed.ts` creates one **Demo Company** workspace and the three accounts below. Run the seed command only against a disposable development database: the script creates a new workspace and duplicate emails will cause it to fail on later runs.
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `alice.admin@demo.test` | `password123` |
+| Analyst | `andy.analyst@demo.test` | `password123` |
+| Viewer | `vera.viewer@demo.test` | `password123` |
+
+These credentials are sample accounts only. Do not use this password for any personal or production account.
+
+## Screenshots
+
+### Analytics preview
+
+![LOOP analytics preview](public/loop-analytics.gif)
+
+### Product workflow preview
+
+![LOOP product workflow preview](public/loop-productivity.gif)
+
+For a final submission, add current captures of the following routes to this section: landing page (`/`), login (`/login`), dashboard (`/dashboard`), inbox (`/inbox`), trends (`/trends`), Ask LOOP (`/ask`), reports (`/reports`), and settings/team (`/settings`).
+
+## Deployment
+
+1. Push the project to a Git provider and import it into Vercel.
+2. Provision a PostgreSQL database and set `DATABASE_URL` in the Vercel project settings.
+3. Add a strong `JWT_SECRET`; optionally add `ANTHROPIC_API_KEY`.
+4. Deploy, then run the Prisma schema and seed commands against the deployment database only if demo data is intended.
+
+Add the live deployment URL and demo video link here when they are available.
+
+## Scope notes
+
+LOOP provides simulated feedback channels; it does not include live Zendesk, Intercom, Discord, App Store, or social-media integrations. Billing, subscriptions, email/SMS delivery infrastructure, native mobile apps, vector embeddings, and pgvector search are outside the current scope.
+
+## License and credits
+
+This project was created as an internship submission. Claude is an Anthropic product; all referenced trademarks belong to their respective owners.

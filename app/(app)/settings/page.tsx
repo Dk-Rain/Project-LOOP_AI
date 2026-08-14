@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   User, 
   Settings, 
@@ -18,29 +18,88 @@ import {
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  // Profile Form States (populated from session)
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
+  // Members states
+  const [members, setMembers] = useState<any[]>([]);
+  const [invites, setInvites] = useState<any[]>([]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("ANALYST");
+  const [inviteResult, setInviteResult] = useState<string | null>(null);
+  const [profileResult, setProfileResult] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const isAdmin = currentUser?.role === "ADMIN";
 
-  // Profile Form States
-  const [fullName, setFullName] = useState("Lawrence Dike");
-  const [email, setEmail] = useState("lawrence@zidiotech.com");
-  const [role, setRole] = useState("Senior Product Specialist");
+  // (Integrations and Developer Keys removed per request)
 
-  // Integrations states
-  const [integrations, setIntegrations] = useState([
-    { id: "slack", name: "Slack channel sync", desc: "Push negative feedback alerts and summaries to developer channels.", connected: true, icon: Share2 },
-    { id: "zendesk", name: "Zendesk ticket import", desc: "Automatically import user support transcripts into LOOP inbox.", connected: true, icon: Key },
-    { id: "analytics", name: "Google Analytics sync", desc: "Map demographic trends to feedback logs automatically.", connected: false, icon: Globe }
-  ]);
-
-  const toggleIntegration = (id: string) => {
-    setIntegrations(prev => 
-      prev.map(item => item.id === id ? { ...item, connected: !item.connected } : item)
-    );
-  };
-
-  const handleProfileSave = (e: React.FormEvent) => {
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Profile settings saved successfully.");
+    setProfileResult(null);
+    setIsSavingProfile(true);
+    try {
+      const res = await fetch("/api/account/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: fullName, email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save profile");
+      setCurrentUser(data.user);
+      setFullName(data.user.name);
+      setEmail(data.user.email);
+      setProfileResult("Profile saved.");
+    } catch (error: any) {
+      setProfileResult(error.message || "Failed to save profile.");
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
+
+  async function fetchMembers() {
+    try {
+      const res = await fetch('/api/members');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch members');
+      setMembers(data.members || []);
+      setInvites(data.invites || []);
+    } catch (err) {
+      // ignore errors silently for now
+      setMembers([]);
+    }
+  }
+
+  async function fetchCurrentUser() {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) throw new Error('Unauthenticated');
+      const data = await res.json();
+      setCurrentUser(data.user || null);
+      if (data.user) {
+        setFullName(data.user.name || '');
+        setEmail(data.user.email || '');
+        setRole(data.user.role || '');
+      }
+    } catch (e) {
+      setCurrentUser(null);
+    }
+  }
+
+  useEffect(() => {
+    fetchCurrentUser();
+    if (activeTab === 'members') fetchMembers();
+  }, [activeTab]);
+
+  // Ensure members list includes current user (defensive)
+  useEffect(() => {
+    if (!currentUser) return;
+    const exists = members.some(m => m.email === currentUser.email);
+    if (!exists && currentUser.workspaceId) {
+      setMembers(prev => [{ id: currentUser.id, name: currentUser.name, email: currentUser.email, role: currentUser.role, createdAt: new Date().toISOString() }, ...prev]);
+    }
+  }, [currentUser, members]);
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -64,26 +123,18 @@ export default function SettingsPage() {
         >
           Account Profile
         </button>
-        <button
-          onClick={() => setActiveTab("integrations")}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition ${
-            activeTab === "integrations" 
-              ? "border-indigo-600 text-zinc-900 font-extrabold" 
-              : "border-transparent text-zinc-500 hover:text-zinc-800"
-          }`}
-        >
-          Active Integrations
-        </button>
-        <button
-          onClick={() => setActiveTab("api")}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition ${
-            activeTab === "api" 
-              ? "border-indigo-600 text-zinc-900 font-extrabold" 
-              : "border-transparent text-zinc-500 hover:text-zinc-800"
-          }`}
-        >
-          API Developer Keys
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setActiveTab("members")}
+            className={`px-4 py-2.5 text-xs font-bold border-b-2 transition ${
+              activeTab === "members"
+                ? "border-indigo-600 text-zinc-900 font-extrabold"
+                : "border-transparent text-zinc-500 hover:text-zinc-800"
+            }`}
+          >
+            Team / Members
+          </button>
+        )}
       </div>
 
       {/* Active Panel */}
@@ -116,111 +167,98 @@ export default function SettingsPage() {
               />
             </div>
 
-            {/* Job Title */}
+            {/* Workspace role */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-zinc-555 text-zinc-500">Job Title</label>
+              <label className="text-xs font-semibold text-zinc-555 text-zinc-500">Workspace Role</label>
               <input
                 type="text"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs text-zinc-900 outline-none transition focus:border-indigo-500"
-                required
+              value={role}
+                readOnly
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-100 px-3.5 py-2.5 text-xs text-zinc-500 outline-none"
               />
             </div>
 
             <button
               type="submit"
+              disabled={isSavingProfile}
               className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-600/10 hover:bg-indigo-500 transition"
             >
-              Save Profile Changes
+              {isSavingProfile ? "Saving..." : "Save Profile Changes"}
             </button>
+            {profileResult && <p className={`text-xs font-medium ${profileResult === "Profile saved." ? "text-green-600" : "text-red-600"}`}>{profileResult}</p>}
           </form>
         </div>
       )}
 
-      {activeTab === "integrations" && (
-        <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 space-y-6 shadow-sm">
+      {/* Removed Integrations and Developer Keys panels */}
+
+      {activeTab === "members" && isAdmin && (
+        <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 space-y-6 shadow-sm max-w-3xl">
           <div>
-            <h3 className="text-sm font-bold text-zinc-900">Workspace Integrations</h3>
-            <p className="text-zinc-500 text-xs mt-0.5">Connect external platforms to import and analyze customer feedback automatically.</p>
-          </div>
-
-          <div className="divide-y divide-zinc-100">
-            {integrations.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-205 border-zinc-200 flex items-center justify-center text-zinc-500">
-                      <Icon className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-zinc-900">{item.name}</p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5 max-w-md">{item.desc}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
-                      item.connected 
-                        ? "bg-green-50 text-green-600 border border-green-100" 
-                        : "bg-zinc-100 text-zinc-500 border border-zinc-200"
-                    }`}>
-                      {item.connected ? "Active" : "Disabled"}
-                    </span>
-
-                    <button
-                      onClick={() => toggleIntegration(item.id)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
-                        item.connected
-                          ? "bg-zinc-50 border-zinc-200 text-zinc-650 hover:text-zinc-900"
-                          : "bg-indigo-600 text-white border-transparent hover:bg-indigo-500"
-                      }`}
-                    >
-                      {item.connected ? "Disconnect" : "Connect"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {activeTab === "api" && (
-        <div className="glass rounded-2xl border border-zinc-200 bg-white p-6 space-y-6 max-w-xl shadow-sm">
-          <div>
-            <h3 className="text-sm font-bold text-zinc-900">Developer API Credentials</h3>
-            <p className="text-zinc-500 text-xs mt-0.5">Use these keys to authenticate server requests when pushing custom data payloads to LOOP.</p>
+            <h3 className="text-sm font-bold text-zinc-900">Workspace Members</h3>
+            <p className="text-zinc-500 text-xs mt-0.5">View and invite teammates to this workspace. Invitations are delivered in-app via a copyable link.</p>
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-zinc-500">Secret Token Key</label>
-              <div className="relative">
-                <input
-                  type={apiKeyVisible ? "text" : "password"}
-                  value="loop_sk_prod_7719fbc923dd88e1a4ef"
-                  readOnly
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 pr-16 text-xs text-zinc-600 font-mono outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setApiKeyVisible(!apiKeyVisible)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-indigo-600 hover:text-indigo-700"
-                >
-                  {apiKeyVisible ? "Hide" : "Reveal"}
-                </button>
+            <div className="bg-zinc-50 p-4 rounded-xl">
+              <h4 className="text-xs font-semibold mb-2">Invite Teammate</h4>
+              <div className="flex flex-wrap gap-2 items-center">
+                <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="email@company.com" className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs outline-none w-full sm:w-64" />
+                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="rounded-xl border border-zinc-200 px-3 py-2 text-xs">
+                  <option value="ANALYST">Analyst</option>
+                  <option value="VIEWER">Viewer</option>
+                </select>
+                <button onClick={async () => {
+                  setInviteResult(null);
+                  try {
+                    const res = await fetch('/api/members/invite', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ email: inviteEmail, role: inviteRole }) });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Invite failed');
+                    setInviteResult(data.inviteUrl || data.token || 'Invitation created');
+                    setInviteEmail('');
+                    // Refresh members list
+                    fetchMembers();
+                  } catch (err: any) {
+                    setInviteResult(err.message || String(err));
+                  }
+                }} className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white">Send Invitation</button>
               </div>
+              {inviteResult && <p className="text-[12px] mt-2">Invite link / token: <span className="font-mono text-indigo-600">{inviteResult}</span></p>}
             </div>
 
-            <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex gap-3 text-xs text-zinc-600">
-              <Info className="h-5 w-5 text-indigo-650 text-indigo-600 shrink-0" />
-              <div>
-                <p className="font-semibold text-zinc-900">Keep secret keys hidden</p>
-                <p className="mt-0.5 leading-relaxed font-medium">
-                  Do not share secret keys in public code repositories or frontend client layouts. Regenerate the key if compromised.
-                </p>
+            <div>
+              <h4 className="text-xs font-semibold mb-2">Members</h4>
+              <div className="space-y-2">
+                {invites.length === 0 && members.length === 0 && <p className="text-zinc-500 text-xs">No members or pending invites yet.</p>}
+
+                {/* Pending invitations */}
+                {invites.map(inv => (
+                  <div key={`inv-${inv.id}`} className="flex items-center justify-between bg-white border border-zinc-100 rounded-xl p-3 text-xs">
+                    <div>
+                      <p className="font-semibold text-zinc-900">{inv.email}</p>
+                      <p className="text-zinc-500 text-[11px]">Invited as {inv.role} • Pending</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => {
+                        const url = `${window.location.origin}/accept-invite?token=${inv.token}`;
+                        navigator.clipboard.writeText(url);
+                        setInviteResult('Copied invite link to clipboard');
+                      }} className="text-[11px] text-indigo-600 font-semibold">Copy Link</button>
+                      <div className="text-[11px] text-zinc-500">Invited {new Date(inv.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Active members */}
+                {members.map(m => (
+                  <div key={m.id} className="flex items-center justify-between bg-white border border-zinc-100 rounded-xl p-3 text-xs">
+                    <div>
+                      <p className="font-semibold text-zinc-900">{m.name || m.email}</p>
+                      <p className="text-zinc-500 text-[11px]">{m.email} • {m.role}</p>
+                    </div>
+                    <div className="text-[11px] text-zinc-500">Joined {new Date(m.createdAt).toLocaleDateString()}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

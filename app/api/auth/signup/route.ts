@@ -11,31 +11,51 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email },
-    });
-
+    const existingUser = await db.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json({ error: "User with this email already exists" }, { status: 400 });
     }
 
-    // Create a new company workspace
-    const finalWorkspaceName = workspaceName || `${name}'s Company`;
-    const workspace = await db.workspace.create({
-      data: { name: finalWorkspaceName },
-    });
-
-    // Create user as ADMIN since they are the creator of this workspace
+    // If there's a pending invitation for this email, auto-accept and attach to that workspace
+    const pendingInvite = await db.invitation.findFirst({ where: { email, accepted: false } });
+    let workspace;
+    let user;
     const hashedPassword = hashPassword(password);
-    const user = await db.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: "ADMIN",
-        workspaceId: workspace.id,
-      },
-    });
+
+    if (pendingInvite) {
+      // Attach to existing workspace and set role from invitation
+      workspace = await db.workspace.findUnique({ where: { id: pendingInvite.workspaceId } });
+      if (!workspace) {
+        return NextResponse.json({ error: "The invited workspace no longer exists" }, { status: 404 });
+      }
+
+      user = await db.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: pendingInvite.role,
+          workspaceId: pendingInvite.workspaceId,
+        },
+      });
+
+      // Mark the invitation accepted
+      await db.invitation.update({ where: { token: pendingInvite.token }, data: { accepted: true } });
+    } else {
+      // No invite: create a new company workspace and make creator ADMIN
+      const finalWorkspaceName = workspaceName || `${name}'s Company`;
+      workspace = await db.workspace.create({ data: { name: finalWorkspaceName } });
+
+      user = await db.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: "ADMIN",
+          workspaceId: workspace.id,
+        },
+      });
+    }
 
     // Sign JWT
     const token = signJWT({
