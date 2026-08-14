@@ -137,15 +137,25 @@ These credentials are sample accounts only. Do not use this password for any per
 
 ## Screenshots
 
-### Analytics preview
+### Create account
 
-![LOOP analytics preview](public/loop-analytics.gif)
+![Create account](public/screenshots/Screenshot_create%20account.jpeg)
 
-### Product workflow preview
+### Login
 
-![LOOP product workflow preview](public/loop-productivity.gif)
+![Login](public/screenshots/Screenshot_Login.jpeg)
 
-For a final submission, add current captures of the following routes to this section: landing page (`/`), login (`/login`), dashboard (`/dashboard`), inbox (`/inbox`), trends (`/trends`), Ask LOOP (`/ask`), reports (`/reports`), and settings/team (`/settings`).
+### Dashboard
+
+![Dashboard](public/screenshots/Screenshot_dashboard.jpeg)
+
+### Feedback Inbox
+
+![Feedback Inbox](public/screenshots/Screenshot_feeback.jpeg)
+
+### Ask LOOP AI
+
+![Ask LOOP AI](public/screenshots/Screenshot_Ask%20loop%20AI.jpeg)
 
 ## Deployment
 
