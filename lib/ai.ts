@@ -1,4 +1,14 @@
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY?.trim() || "";
+// The former Claude 3.5 Sonnet model in this project has been retired.
+// Keep this configurable so deployments can choose a model without a code edit.
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-20250514";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY?.trim() || "";
+const OPENAI_MODEL = process.env.OPENAI_MODEL?.trim() || "gpt-5.6-luna";
+
+async function anthropicError(response: Response): Promise<Error> {
+  const detail = await response.text();
+  return new Error(`Claude API request failed (${response.status}): ${detail.slice(0, 500)}`);
+}
 
 export interface ClassificationResult {
   sentiment: "Positive" | "Neutral" | "Negative";
@@ -20,7 +30,7 @@ export async function classifyFeedback(text: string): Promise<ClassificationResu
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
+          model: ANTHROPIC_MODEL,
           max_tokens: 1000,
           messages: [
             {
@@ -104,6 +114,54 @@ export async function classifyFeedback(text: string): Promise<ClassificationResu
 export async function answerQuestion(question: string, feedbacks: any[]): Promise<{ answer: string; evidenceIds: string[] }> {
   const context = feedbacks.map((f, i) => `[ID: ${f.id}] ${f.customerName || "User"}: "${f.content}" (Sentiment: ${f.sentiment}, Theme: ${f.themes.map((t: any) => t.name).join(", ")})`).join("\n\n");
 
+  if (OPENAI_API_KEY) {
+    const prompt = `You are Ask LOOP, an AI feedback analysis teammate. Answer this question: "${question}" based ONLY on the following customer feedback context. Cite specific customer names and support your answer with quotes.
+
+Context:
+${context}
+
+Rules:
+1. If the context does not contain relevant information, state that you cannot find this in current logs. Do not invent details.
+2. At the very end, add a line in exactly this format with the feedback IDs used: Evidence IDs: id-1, id-2`;
+
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        input: prompt,
+        max_output_tokens: 1200,
+        store: false,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API request failed (${response.status}): ${(await response.text()).slice(0, 500)}`);
+    }
+
+    const data = await response.json();
+    const answerText = data.output_text || data.output
+      ?.flatMap((item: { content?: Array<{ text?: string }> }) => item.content || [])
+      .map((item: { text?: string }) => item.text || "")
+      .join("\n") || "";
+    if (!answerText.trim()) {
+      throw new Error("OpenAI returned an empty answer.");
+    }
+
+    const evidenceMatch = answerText.match(/Evidence IDs:\s*([^\n\r]+)/i);
+    const evidenceIds = evidenceMatch
+      ? evidenceMatch[1].split(",").map((id: string) => id.trim()).filter((id: string) => feedbacks.some((f) => f.id === id))
+      : feedbacks.filter((f) => answerText.includes(f.id)).map((f) => f.id);
+
+    return {
+      answer: answerText.replace(/Evidence IDs:.*/i, "").trim(),
+      evidenceIds: evidenceIds.length > 0 ? evidenceIds : feedbacks.slice(0, 3).map((f) => f.id),
+    };
+  }
+
   if (ANTHROPIC_API_KEY) {
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -114,7 +172,7 @@ export async function answerQuestion(question: string, feedbacks: any[]): Promis
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
+          model: ANTHROPIC_MODEL,
           max_tokens: 1200,
           messages: [
             {
@@ -125,25 +183,35 @@ export async function answerQuestion(question: string, feedbacks: any[]): Promis
         })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const answerText = data.content?.[0]?.text || "";
-        // Parse evidence IDs
-        const evidenceMatch = answerText.match(/Evidence IDs:\s*([^\n\r]+)/i);
-        let evidenceIds: string[] = [];
-        if (evidenceMatch) {
-          evidenceIds = evidenceMatch[1].split(",").map((s: string) => s.trim()).filter((s: string) => feedbacks.some(f => f.id === s));
-        } else {
-          // Fallback to searching IDs in text
-          evidenceIds = feedbacks.filter(f => answerText.includes(f.id)).map(f => f.id);
-        }
-        return {
-          answer: answerText.replace(/Evidence IDs:.*/i, "").trim(),
-          evidenceIds: evidenceIds.length > 0 ? evidenceIds : feedbacks.slice(0, 3).map(f => f.id)
-        };
+      if (!response.ok) {
+        throw await anthropicError(response);
       }
-    } catch (e) {
-      // Fallback
+
+      const data = await response.json();
+      const answerText = data.content
+        ?.filter((block: { type?: string }) => block.type === "text")
+        .map((block: { text?: string }) => block.text || "")
+        .join("\n") || "";
+      if (!answerText.trim()) {
+        throw new Error("Claude returned an empty answer.");
+      }
+        // Parse evidence IDs
+      const evidenceMatch = answerText.match(/Evidence IDs:\s*([^\n\r]+)/i);
+      let evidenceIds: string[] = [];
+      if (evidenceMatch) {
+        evidenceIds = evidenceMatch[1].split(",").map((s: string) => s.trim()).filter((s: string) => feedbacks.some(f => f.id === s));
+      } else {
+        // Fallback to searching IDs in text
+        evidenceIds = feedbacks.filter(f => answerText.includes(f.id)).map(f => f.id);
+      }
+      return {
+        answer: answerText.replace(/Evidence IDs:.*/i, "").trim(),
+        evidenceIds: evidenceIds.length > 0 ? evidenceIds : feedbacks.slice(0, 3).map(f => f.id)
+      };
+    } catch (error) {
+      // A configured key means the user explicitly requested Claude. Do not
+      // disguise an authentication, quota, or model error as a local AI answer.
+      throw error;
     }
   }
 
@@ -187,7 +255,7 @@ export async function generateReport(title: string, feedbacks: any[]): Promise<s
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
+          model: ANTHROPIC_MODEL,
           max_tokens: 1500,
           messages: [
             {

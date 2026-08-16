@@ -183,7 +183,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-x-hidden min-h-screen">
+      <div className="flex-1 min-w-0 flex flex-col overflow-x-hidden min-h-screen">
         {/* Top Header - Search & Profile Actions */}
         <header className="hidden md:flex h-16 items-center justify-between border-b border-zinc-200 px-8 bg-white/80 backdrop-blur-sm z-35">
           {/* Global Search Bar */}

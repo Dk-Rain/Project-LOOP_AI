@@ -149,7 +149,7 @@ export default function Home() {
   const currentData = SIMULATOR_DATA[selectedSource];
 
   return (
-    <div className="relative min-h-screen bg-white text-zinc-900 overflow-hidden gradient-bg selection:bg-indigo-500 selection:text-white">
+    <div className="relative min-h-screen bg-white text-zinc-900 overflow-x-hidden gradient-bg selection:bg-indigo-500 selection:text-white">
       {/* Background Decorative Glows */}
       <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.08),transparent_50%)] animate-pulse-slow" />
       <div className="pointer-events-none absolute right-10 bottom-10 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(14,165,233,0.03),transparent_50%)]" />

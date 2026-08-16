@@ -9,7 +9,7 @@ export default function AuthLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen bg-white text-zinc-900 flex flex-col lg:grid lg:grid-cols-12 overflow-hidden">
+    <div className="relative min-h-screen bg-white text-zinc-900 flex flex-col lg:grid lg:grid-cols-12 overflow-x-hidden">
       {/* Decorative Orbs for the entire page background */}
       <div className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.03),transparent_70%)]" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(14,165,233,0.02),transparent_70%)]" />
