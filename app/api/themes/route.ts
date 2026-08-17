@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 
+type ThemeWithFeedbacks = {
+  id: string;
+  name: string;
+  createdAt: Date;
+  feedbacks: Array<{
+    sentiment: string;
+    sentimentScore: number;
+  }>;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const user = getSessionUser(request);
@@ -25,7 +35,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format theme summaries
-    const summaries = themes.map((theme) => {
+    const summaries = themes.map((theme: ThemeWithFeedbacks) => {
       const feedbacks = theme.feedbacks;
       const count = feedbacks.length;
       
