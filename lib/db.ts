@@ -3,7 +3,11 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:admin@localhost:5432/loop";
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is required to connect to PostgreSQL.");
+}
 
 // Create database driver instance
 const pool = new Pool({ connectionString });
