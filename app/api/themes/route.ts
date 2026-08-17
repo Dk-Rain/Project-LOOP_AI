@@ -12,6 +12,19 @@ type ThemeWithFeedbacks = {
   }>;
 };
 
+type ThemeSummary = {
+  id: string;
+  name: string;
+  count: number;
+  avgSentimentScore: number;
+  sentimentDistribution: {
+    positive: number;
+    negative: number;
+    neutral: number;
+  };
+  createdAt: Date;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const user = getSessionUser(request);
@@ -35,7 +48,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format theme summaries
-    const summaries = themes.map((theme: ThemeWithFeedbacks) => {
+    const summaries: ThemeSummary[] = themes.map((theme: ThemeWithFeedbacks): ThemeSummary => {
       const feedbacks = theme.feedbacks;
       const count = feedbacks.length;
       
@@ -62,7 +75,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Sort by count descending
-    summaries.sort((a, b) => b.count - a.count);
+    summaries.sort((a: ThemeSummary, b: ThemeSummary) => b.count - a.count);
 
     return NextResponse.json({ success: true, themes: summaries });
   } catch (error: any) {
