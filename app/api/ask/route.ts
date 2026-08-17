@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const aiAnswer = await answerQuestion(question, feedbacks);
 
     // Filter evidence feedbacks based on returned evidenceIds
-    const evidenceFeedbacks = feedbacks.filter(f => aiAnswer.evidenceIds.includes(f.id));
+    const evidenceFeedbacks = feedbacks.filter((f: { id: string }) => aiAnswer.evidenceIds.includes(f.id));
 
     return NextResponse.json({
       success: true,
