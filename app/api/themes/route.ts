@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Sort by count descending
-    summaries.sort((a, b) => b.count - a.count);
+    summaries.sort((a: { count: number }, b: { count: number }) => b.count - a.count);
 
     return NextResponse.json({ success: true, themes: summaries });
   } catch (error: any) {

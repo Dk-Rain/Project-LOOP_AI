@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 
+type ThemeWithFeedbacks = {
+  id: string;
+  name: string;
+  feedbacks: Array<{
+    createdAt: Date;
+  }>;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const user = getSessionUser(request);
@@ -24,7 +32,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const spikingThemes = themes.map((theme) => {
+    const spikingThemes = themes.map((theme: ThemeWithFeedbacks) => {
       const recentCount = theme.feedbacks.filter(
         (f) => f.createdAt >= sevenDaysAgo && f.createdAt <= now
       ).length;
@@ -51,7 +59,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Sort by growth percentage descending, showing spiking ones first
-    spikingThemes.sort((a, b) => b.growthPercent - a.growthPercent);
+    spikingThemes.sort((a: { growthPercent: number }, b: { growthPercent: number }) => b.growthPercent - a.growthPercent);
 
     return NextResponse.json({ success: true, themes: spikingThemes });
   } catch (error: any) {
