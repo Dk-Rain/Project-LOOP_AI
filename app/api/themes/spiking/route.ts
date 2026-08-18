@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 
+type FeedbackTimestamp = {
+  createdAt: Date;
+};
+
+type SpikingTheme = {
+  id: string;
+  name: string;
+  recentCount: number;
+  previousCount: number;
+  growthPercent: number;
+  isSpiking: boolean;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const user = getSessionUser(request);
@@ -24,13 +37,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const spikingThemes = themes.map((theme: (typeof themes)[number]) => {
+    const spikingThemes: SpikingTheme[] = themes.map((theme: (typeof themes)[number]) => {
       const recentCount = theme.feedbacks.filter(
-        (f) => f.createdAt >= sevenDaysAgo && f.createdAt <= now
+        (feedback: FeedbackTimestamp) =>
+          feedback.createdAt >= sevenDaysAgo && feedback.createdAt <= now
       ).length;
-      
+
       const previousCount = theme.feedbacks.filter(
-        (f) => f.createdAt >= fourteenDaysAgo && f.createdAt < sevenDaysAgo
+        (feedback: FeedbackTimestamp) =>
+          feedback.createdAt >= fourteenDaysAgo && feedback.createdAt < sevenDaysAgo
       ).length;
 
       let growth = 0;
