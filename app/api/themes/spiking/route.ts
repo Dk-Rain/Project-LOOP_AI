@@ -55,7 +55,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Sort by growth percentage descending, showing spiking ones first
-    spikingThemes.sort((a, b) => b.growthPercent - a.growthPercent);
+    spikingThemes.sort(
+      (a: { growthPercent: number }, b: { growthPercent: number }) =>
+        b.growthPercent - a.growthPercent
+    );
 
     return NextResponse.json({ success: true, themes: spikingThemes });
   } catch (error: any) {
