@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const spikingThemes = themes.map((theme) => {
+    const spikingThemes = themes.map((theme: (typeof themes)[number]) => {
       const recentCount = theme.feedbacks.filter(
         (f) => f.createdAt >= sevenDaysAgo && f.createdAt <= now
       ).length;
